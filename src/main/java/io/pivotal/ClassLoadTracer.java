@@ -65,16 +65,13 @@ public class ClassLoadTracer {
       public byte[] transform(ClassLoader loader, String className,
           Class classBeingRedefined,
           ProtectionDomain protectionDomain,
-          byte[] classfileBuffer)
-          throws IllegalClassFormatException {
+          byte[] classfileBuffer) {
 
         String from = loader.getResource(className.replace('.', '/') +
             ".class").toString();
 
         StringBuilder builder = new StringBuilder(SDF.format(new Date()));
-        builder.append(" - ").append(loader);
-        builder.append(" [loader=").append(
-            String.format("%x", loader.hashCode()));
+        builder.append(" - [classloader=").append(loader.toString());
         builder.append(", thread=").append(Thread.currentThread());
         builder.append("] loaded ").append(className);
         builder.append(" from ").append(from);

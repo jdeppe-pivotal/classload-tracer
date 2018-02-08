@@ -13,7 +13,7 @@ The `classPattern` option is a regular expression which, when matched against th
 
 The output of the tool looks something like this:
 
-    2014/03/70 15:44:49.923 - sun.misc.Launcher$AppClassLoader@1e1ff563 [loader=1e1ff563, thread=Thread[main,5,main]] loaded com/gemstone/gemfire/InternalGemFireException from jar:file:/Users/jdeppe/gemfire/70/lib/gemfire.jar!/com/gemstone/gemfire/InternalGemFireException.class
+    2014/03/70 15:44:49.923 - [classloader=sun.misc.Launcher$AppClassLoader@1e1ff563, thread=Thread[main,5,main]] loaded com/gemstone/gemfire/InternalGemFireException from jar:file:/Users/jdeppe/gemfire/70/lib/gemfire.jar!/com/gemstone/gemfire/InternalGemFireException.class
         <...>
         java.lang.ClassLoader.loadClass(ClassLoader.java:357)
         com.gemstone.gemfire.i18n.StringId.getBundle(StringId.java:77)
