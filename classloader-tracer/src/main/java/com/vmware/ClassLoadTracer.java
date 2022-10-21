@@ -36,22 +36,8 @@ public class ClassLoadTracer {
       "yyyy/MM/DD HH:mm:ss.S");
 
   public static void premain(String agentArgs, Instrumentation inst) {
-    PrintStream tmpOut = null;
-    Map<String, String> args = processArgs(agentArgs);
-    String log = args.get("log");
-
-    if (log != null) {
-      try {
-        tmpOut = new PrintStream(new FileOutputStream(log));
-      } catch (FileNotFoundException e) {
-        System.err.println(
-            ClassLoadTracer.class.getSimpleName() + ": Exception creating log file "
-                + log + " - " + e.getMessage());
-      }
-    } else {
-      tmpOut = System.err;
-    }
-    final PrintStream out = tmpOut;
+    Map<String, String> args = Utils.processArgs(agentArgs);
+    PrintStream out = Utils.makeLog(args.get("log"));
 
     String patternStr = args.get("classPattern");
     Pattern tmpPattern = null;
@@ -60,73 +46,55 @@ public class ClassLoadTracer {
     }
     final Pattern pattern = tmpPattern;
 
-    inst.addTransformer(new ClassFileTransformer() {
-      public byte[] transform(ClassLoader loader, String className,
-                              Class classBeingRedefined,
-                              ProtectionDomain protectionDomain,
-                              byte[] classfileBuffer) {
+    inst.addTransformer(
+        (loader, className, classBeingRedefined, protectionDomain, classfileBuffer) -> {
 
-        String from = loader.getResource(className.replace('.', '/') +
-            ".class").toString();
+          String from = loader.getResource(className.replace('.', '/') +
+              ".class").toString();
 
-        StringBuilder builder = new StringBuilder(SDF.format(new Date()));
-        builder.append(" - [classloader=").append(loader.toString());
-        builder.append(", thread=").append(Thread.currentThread());
-        builder.append("] loaded ").append(className);
-        builder.append(" from ").append(from);
+          StringBuilder builder = new StringBuilder(SDF.format(new Date()));
+          builder.append(" - [classloader=").append(loader.toString());
+          builder.append(", thread=").append(Thread.currentThread());
+          builder.append("] loaded ").append(className);
+          builder.append(" from ").append(from);
 
-        out.println(builder);
+          out.println(builder);
 
-        if (pattern != null) {
-          Matcher m = pattern.matcher(className);
-          if (m.find()) {
-            StackTraceElement[] frames = Thread.currentThread().getStackTrace();
-            // Try and skip a bunch of standard stacks...
-            int idx = frames.length - 1;
-            for (; idx > 0; idx--) {
-              String c = frames[idx].getClassName();
-              if (c.startsWith("java.lang.ClassLoader") ||
-                  c.startsWith("sun.misc.Launcher") ||
-                  c.startsWith("java.net.URLClassLoader") ||
-                  c.startsWith("java.security.SecureClassLoader")) {
-                break;
+          if (pattern != null) {
+            Matcher m = pattern.matcher(className);
+            if (m.find()) {
+              StackTraceElement[] frames = Thread.currentThread().getStackTrace();
+              // Try and skip a bunch of standard stacks...
+              int idx = frames.length - 1;
+              for (; idx > 0; idx--) {
+                String c = frames[idx].getClassName();
+                if (c.startsWith("java.lang.ClassLoader") ||
+                    c.startsWith("sun.misc.Launcher") ||
+                    c.startsWith("java.net.URLClassLoader") ||
+                    c.startsWith("java.security.SecureClassLoader")) {
+                  break;
+                }
+              }
+
+              if (idx > 0) {
+                out.println("    <...>");
+              }
+
+              for (; idx < frames.length; idx++) {
+                StringBuilder line = new StringBuilder();
+                line.append("    ");
+                line.append(frames[idx].getClassName()).append(".");
+                line.append(frames[idx].getMethodName()).append("(");
+                line.append(frames[idx].getFileName()).append(":");
+                line.append(frames[idx].getLineNumber()).append(")");
+                out.println(line);
               }
             }
-
-            if (idx > 0) {
-              out.println("    <...>");
-            }
-
-            for (; idx < frames.length; idx++) {
-              StringBuilder line = new StringBuilder();
-              line.append("    ");
-              line.append(frames[idx].getClassName()).append(".");
-              line.append(frames[idx].getMethodName()).append("(");
-              line.append(frames[idx].getFileName()).append(":");
-              line.append(frames[idx].getLineNumber()).append(")");
-              out.println(line);
-            }
           }
-        }
 
-        // we just want the original .class bytes to be loaded!
-        return null;
-      }
-    });
-  }
-
-  private static Map<String, String> processArgs(String argString) {
-    Map<String, String> args = new HashMap<String, String>();
-
-    if (argString != null) {
-      String[] splits = argString.split(",");
-      for (String s : splits) {
-        String[] pair = s.split("=");
-        args.put(pair[0], pair[1]);
-      }
-    }
-
-    return args;
+          // we just want the original .class bytes to be loaded!
+          return null;
+        });
   }
 
 }
