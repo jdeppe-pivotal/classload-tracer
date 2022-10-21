@@ -1,28 +1,9 @@
-package io.pivotal;
-
-/**
- * Java agent which helps with debugging classloading issues by displaying
- * where classes are loaded from.
- *
- * To use it start your Java process with:
- *
- *   -javaagent=<path to classload-tracer.jar>
- *
- * By default, the output goes to stdout; by adding a 'log' option, the output
- * can be directed to a file.
- *
- * Additionally, if you want to see exactly where in your code a class load is
- * being triggered you can use the 'classPattern' option. This option takes a
- * regular expression which matches against the class names. For the classes
- * that match, additional stack info will be printed allowing you to pinpoint
- * exact code locations which have triggered a class to be loaded.
- */
+package com.vmware;
 
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
 import java.lang.instrument.ClassFileTransformer;
-import java.lang.instrument.IllegalClassFormatException;
 import java.lang.instrument.Instrumentation;
 import java.security.ProtectionDomain;
 import java.text.SimpleDateFormat;
@@ -32,6 +13,24 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * Java agent which helps with debugging classloading issues by displaying where classes are loaded
+ * from.
+ * <p/>
+ * To use it start your Java process with:
+ * <p/>
+ * <pre>
+ * -javaagent=&lt;path to classload-tracer.jar>
+ * </pre>
+ *
+ * By default, the output goes to stdout; by adding a 'log' option, the output can be directed to a
+ * file.
+ * <p/>
+ * Additionally, if you want to see exactly where in your code a class load is being triggered you
+ * can use the 'classPattern' option. This option takes a regular expression which matches against
+ * the class names. For the classes that match, additional stack info will be printed allowing you
+ * to pinpoint exact code locations which have triggered a class to be loaded.
+ */
 public class ClassLoadTracer {
   private static final SimpleDateFormat SDF = new SimpleDateFormat(
       "yyyy/MM/DD HH:mm:ss.S");
@@ -63,9 +62,9 @@ public class ClassLoadTracer {
 
     inst.addTransformer(new ClassFileTransformer() {
       public byte[] transform(ClassLoader loader, String className,
-          Class classBeingRedefined,
-          ProtectionDomain protectionDomain,
-          byte[] classfileBuffer) {
+                              Class classBeingRedefined,
+                              ProtectionDomain protectionDomain,
+                              byte[] classfileBuffer) {
 
         String from = loader.getResource(className.replace('.', '/') +
             ".class").toString();
@@ -129,4 +128,5 @@ public class ClassLoadTracer {
 
     return args;
   }
+
 }
